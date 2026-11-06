@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caderno de Clínica</title>
+<meta name="description" content="Pérolas da enfermaria, por área da Clínica Médica. Funciona offline.">
+<meta name="theme-color" content="#1d3fa6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Caderno">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+/* Fichário: divisórias coloridas por área, cartões com a cor da aba na margem. Fontes do sistema: o app abre sem internet. */
+:root {
+  --paper: #eef1f4;
+  --sheet: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6876;
+  --line: #d5dce3;
+  --pen: #1d3fa6;
+  --pen-soft: #e3e9fb;
+  --on-pen: #ffffff;
+  --danger: #b4232f;
+  --ok: #1d7a4a;
+  --warn: #a35b00;
+  --display: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #12171d; --sheet: #1b222a; --ink: #e6ebf0; --muted: #9aa7b4;
+    --line: #2d3742; --pen: #8fa8ff; --pen-soft: #23305a; --on-pen: #0d1430;
+    --danger: #ff7b85; --ok: #5fd39a; --warn: #f2b15a; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 17px/1.5 var(--body);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  display: grid; gap: 14px;
+}
+header.top { display: grid; gap: 4px; }
+.titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+h1 { font: 800 clamp(27px, 7.5vw, 38px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
+h1 span { color: var(--pen); }
+.headbtns { display: flex; align-items: center; gap: 6px; }
+.status {
+  font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap; background: transparent; font-family: inherit; cursor: pointer;
+}
+.status.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.status.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.iconbtn {
+  width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--sheet);
+  color: var(--ink); display: grid; place-items: center; cursor: pointer;
+}
+.sub { color: var(--muted); font-size: 14px; margin: 0; }
+
+.banner {
+  background: var(--pen-soft); color: var(--ink); border-radius: 12px; padding: 12px 14px;
+  display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px;
+}
+.banner p { margin: 0; flex: 1; }
+.banner b { color: var(--pen); }
+
+.search {
+  display: flex; align-items: center; gap: 8px; background: var(--sheet);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 0 12px;
+}
+.search:focus-within { border-color: var(--pen); }
+.search input { flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; padding: 12px 0; outline: none; min-width: 0; }
+.search svg { flex: none; color: var(--muted); }
+
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none; display: inline-flex; align-items: center; gap: 7px;
+  font: 700 14px/1 var(--body); color: var(--ink);
+  background: var(--sheet); border: 1.5px solid var(--line); border-top: 4px solid var(--c, var(--line));
+  border-radius: 8px 8px 6px 6px; padding: 9px 11px 10px; cursor: pointer;
+}
+.tab .n { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 400; }
+.tab[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); border-top-color: var(--c, var(--ink)); }
+.tab[aria-pressed="true"] .n { color: inherit; opacity: .75; }
+:focus-visible { outline: 2.5px solid var(--pen); outline-offset: 2px; }
+
+.composer { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+.composer > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; font: 700 16.5px/1.2 var(--display); color: var(--pen);
+}
+.composer > summary::-webkit-details-marker { display: none; }
+.composer > summary .plus {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--pen); color: var(--on-pen); font-size: 19px; line-height: 1;
+}
+.composer[open] > summary .plus { transform: rotate(45deg); }
+form { display: grid; gap: 12px; }
+.composer form { padding: 0 16px 16px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+label { display: grid; gap: 5px; font-size: 13px; font-weight: 700; color: var(--muted); }
+input[type="text"], input[type="email"], input[type="password"], select, textarea {
+  font: inherit; font-size: 16px; color: var(--ink); background: var(--paper);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 12px; width: 100%;
+}
+textarea { min-height: 120px; resize: vertical; line-height: 1.45; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn {
+  font: 700 15px/1 var(--body); border-radius: 10px; padding: 12px 16px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink);
+}
+.btn.primary { background: var(--pen); border-color: var(--pen); color: var(--on-pen); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 9px 10px; }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: .5; cursor: default; }
+.formmsg { font-size: 13.5px; color: var(--muted); }
+.formmsg.err { color: var(--danger); }
+
+.listhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.listhead h2 { font: 700 19px/1.2 var(--display); margin: 0; }
+.listhead .count { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.notes { display: grid; gap: 10px; }
+.note {
+  background: var(--sheet); border: 1.5px solid var(--line); border-left: 6px solid var(--c);
+  border-radius: 12px; padding: 13px 14px 8px; display: grid; gap: 7px;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.meta .area { font-weight: 700; color: var(--c); }
+.meta .via { border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; }
+.meta .pend { color: var(--warn); font-weight: 700; }
+.note h3 { margin: 0; font: 700 17.5px/1.3 var(--display); }
+.note .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
+.note .src { font-size: 14px; color: var(--muted); font-style: italic; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tagchip { font: 13px/1.4 var(--body); background: var(--pen-soft); color: var(--pen); border-radius: 6px; padding: 2px 8px; cursor: pointer; border: 0; }
+.note .tools { display: flex; gap: 2px; justify-content: flex-end; margin-right: -6px; flex-wrap: wrap; }
+.confirm { display: flex; gap: 8px; align-items: center; justify-content: flex-end; font-size: 14.5px; flex-wrap: wrap; padding-bottom: 6px; }
+mark { background: color-mix(in srgb, var(--pen) 22%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+.empty { border: 1.5px dashed var(--line); border-radius: 14px; padding: 22px 18px; color: var(--muted); display: grid; gap: 6px; }
+.empty strong { color: var(--ink); font-family: var(--display); font-size: 17px; }
+
+/* painel de conta */
+dialog.sheet {
+  border: 0; padding: 0; background: transparent; width: min(560px, 100%); max-width: 100%; margin: auto auto 0;
+}
+dialog.sheet::backdrop { background: rgba(10, 16, 24, .45); }
+.sheetbody {
+  background: var(--sheet); color: var(--ink); border-radius: 18px 18px 0 0;
+  padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); display: grid; gap: 16px;
+}
+@media (min-width: 600px) { dialog.sheet { margin: auto; } .sheetbody { border-radius: 18px; } }
+.sheethead { display: flex; justify-content: space-between; align-items: center; }
+.sheethead h2 { font: 800 21px/1.2 var(--display); margin: 0; }
+.sheet section { display: grid; gap: 10px; }
+.sheet h3 { margin: 0; font: 700 15px/1.2 var(--body); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.kv { font-size: 14.5px; color: var(--muted); margin: 0; }
+.kv b { color: var(--ink); }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 14.5px; font-weight: 700;
+  padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity .2s;
+  max-width: calc(100% - 32px); z-index: 10;
+}
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="titlerow">
+      <h1>Caderno de <span>Clínica</span></h1>
+      <div class="headbtns">
+        <button id="status" class="status" type="button" aria-label="Estado da sincronização">só neste aparelho</button>
+        <button id="openSettings" class="iconbtn" type="button" aria-label="Conta e backup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="sub" id="sub">Pérolas da enfermaria, por área.</p>
+  </header>
+
+  <div class="banner" id="installBanner" hidden>
+    <p>Para instalar: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>. Instalado, o caderno abre mesmo sem internet.</p>
+    <button class="btn ghost" type="button" id="dismissInstall">Ok</button>
+  </div>
+
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Buscar (ex.: hipercalemia, #dose)" autocomplete="off" aria-label="Buscar no caderno">
+  </div>
+
+  <nav class="tabs" id="tabs" aria-label="Áreas"></nav>
+
+  <details class="composer" id="composer">
+    <summary><span class="plus" aria-hidden="true">+</span><span id="composerTitle">Nova anotação</span></summary>
+    <form id="form" novalidate>
+      <div class="row2">
+        <label for="f-area">Área <select id="f-area"></select></label>
+        <label for="f-titulo">Título (opcional) <input id="f-titulo" type="text" placeholder="ex.: Hipercalemia com alteração no ECG"></label>
+      </div>
+      <label for="f-texto">Anotação
+        <textarea id="f-texto" placeholder="O que você aprendeu, em poucas linhas. Doses e critérios de forma objetiva."></textarea>
+      </label>
+      <div class="row2">
+        <label for="f-fonte">Fonte <input id="f-fonte" type="text" placeholder="ex.: Diretriz SBC, TdC, preceptor"></label>
+        <label for="f-tags">Tags (separe por vírgula) <input id="f-tags" type="text" placeholder="ex.: dose, ECG, UTI"></label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit" id="saveBtn">Salvar no caderno</button>
+        <button class="btn ghost" type="button" id="cancelEdit" hidden>Cancelar edição</button>
+        <span class="formmsg" id="formmsg"></span>
+      </div>
+    </form>
+  </details>
+
+  <section aria-labelledby="listTitle" style="display:grid; gap:10px;">
+    <div class="listhead"><h2 id="listTitle">Todas as áreas</h2><span class="count" id="count"></span></div>
+    <div class="notes" id="notes"></div>
+  </section>
+</div>
+
+<dialog class="sheet" id="settings" aria-labelledby="settingsTitle">
+  <div class="sheetbody">
+    <div class="sheethead">
+      <h2 id="settingsTitle">Conta e backup</h2>
+      <button class="btn ghost" type="button" id="closeSettings">Fechar</button>
+    </div>
+
+    <section id="accountOut">
+      <h3>Sincronização</h3>
+      <p class="kv" id="cfgMsg">Entre para sincronizar o caderno entre aparelhos e receber as notas que o Claude anotar.</p>
+      <form id="loginForm" novalidate>
+        <label for="l-email">E-mail <input id="l-email" type="email" autocomplete="username" inputmode="email"></label>
+        <label for="l-senha">Senha <input id="l-senha" type="password" autocomplete="current-password"></label>
+        <div class="actions">
+          <button class="btn primary" type="submit" id="loginBtn">Entrar</button>
+          <button class="btn" type="button" id="signupBtn">Criar conta</button>
+        </div>
+        <span class="formmsg" id="loginMsg" role="status"></span>
+      </form>
+    </section>
+
+    <section id="accountIn" hidden>
+      <h3>Sincronização</h3>
+      <p class="kv">Conectado como <b id="whoami"></b></p>
+      <p class="kv" id="lastSync"></p>
+      <div class="actions">
+        <button class="btn primary" type="button" id="syncNow">Sincronizar agora</button>
+        <button class="btn danger" type="button" id="logoutBtn">Sair</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Backup</h3>
+      <p class="kv">Arquivo Markdown com todas as notas, organizadas por área.</p>
+      <div class="actions">
+        <button class="btn" type="button" id="exportBtn">Baixar backup (.md)</button>
+        <button class="btn" type="button" id="copyAllBtn">Copiar tudo</button>
+      </div>
+    </section>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
