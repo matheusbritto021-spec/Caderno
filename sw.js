@@ -1,6 +1,6 @@
 // Service worker: guarda o app no aparelho para abrir sem internet.
 // Ao publicar uma versão nova, aumente VERSION.
-const VERSION = "caderno-v1";
+const VERSION = "caderno-v2";
 const SHELL = [
   "./",
   "./index.html",

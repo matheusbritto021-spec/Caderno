@@ -20,7 +20,9 @@ create table if not exists public.notas (
 create index if not exists notas_user_sinc_idx on public.notas (user_id, sincronizado);
 
 create or replace function public.notas_carimbo()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = ''
+as $$
 begin
   new.sincronizado := clock_timestamp();
   return new;
@@ -38,7 +40,7 @@ drop policy if exists "dono cria"    on public.notas;
 drop policy if exists "dono altera"  on public.notas;
 drop policy if exists "dono apaga"   on public.notas;
 
-create policy "dono le"     on public.notas for select using (user_id = auth.uid());
-create policy "dono cria"   on public.notas for insert with check (user_id = auth.uid());
-create policy "dono altera" on public.notas for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "dono apaga"  on public.notas for delete using (user_id = auth.uid());
+create policy "dono le"     on public.notas for select to authenticated using (user_id = (select auth.uid()));
+create policy "dono cria"   on public.notas for insert to authenticated with check (user_id = (select auth.uid()));
+create policy "dono altera" on public.notas for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "dono apaga"  on public.notas for delete to authenticated using (user_id = (select auth.uid()));
